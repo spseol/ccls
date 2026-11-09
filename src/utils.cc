@@ -12,7 +12,12 @@
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Support/FileSystem.h>
+#include <llvm/Support/ConvertUTF.h>
 #include <llvm/Support/Path.h>
+#include <llvm/ADT/SmallString.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include <algorithm>
 #include <assert.h>
@@ -186,5 +191,42 @@ int reverseSubseqMatch(std::string_view pat, std::string_view text, int case_sen
   return -1;
 }
 
-std::string getDefaultResourceDirectory() { return CLANG_RESOURCE_DIRECTORY; }
+#ifdef _WIN32
+// Relocatable Windows packages ship the Clang resource directory as
+// <prefix>/lib/clang/<version> next to <prefix>/bin/ccls.exe. Prefer it over
+// the absolute path of the build machine baked in at compile time.
+static std::string findBundledResourceDirectory() {
+  wchar_t buf[32768];
+  DWORD n = GetModuleFileNameW(nullptr, buf, sizeof(buf) / sizeof(buf[0]));
+  if (!n || n >= sizeof(buf) / sizeof(buf[0]))
+    return "";
+  std::string exe;
+  if (!llvm::convertWideToUTF8(std::wstring(buf, n), exe))
+    return "";
+  llvm::SmallString<256> dir(llvm::sys::path::parent_path(exe)); // <prefix>/bin
+  llvm::sys::path::append(dir, "..", "lib", "clang");
+  std::error_code ec;
+  std::string best;
+  for (llvm::sys::fs::directory_iterator it(dir, ec), e; !ec && it != e; it.increment(ec)) {
+    llvm::SmallString<256> inc(it->path());
+    llvm::sys::path::append(inc, "include");
+    if (llvm::sys::fs::is_directory(inc) && it->path() > best)
+      best = it->path();
+  }
+  if (best.empty())
+    return "";
+  llvm::SmallString<256> real(best);
+  llvm::sys::path::remove_dots(real, /*remove_dot_dot=*/true);
+  return std::string(real.str());
+}
+#endif
+
+std::string getDefaultResourceDirectory() {
+#ifdef _WIN32
+  std::string bundled = findBundledResourceDirectory();
+  if (!bundled.empty())
+    return bundled;
+#endif
+  return CLANG_RESOURCE_DIRECTORY;
+}
 } // namespace ccls
