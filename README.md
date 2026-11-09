@@ -1,5 +1,16 @@
 # ccls
 
+> **This is a fork of [MaskRay/ccls](https://github.com/MaskRay/ccls)** (upstream), maintained only to provide
+> **prebuilt Windows (x64) binaries**.
+>
+> * The default branch `windows-build` is upstream `master` plus Windows packaging: a relocatable clang resource
+>   directory, the release script [`windows/build-release.ps1`](windows/build-release.ps1) and an NSIS installer.
+>   The language server itself is not changed. The branch `master` mirrors upstream.
+> * **Download the installer / zip from the [Releases](../../releases) page.** Installation and build instructions:
+>   [INSTALL-windows.md](INSTALL-windows.md) (in Czech).
+> * For everything else (bug reports, features, documentation) see the [upstream repository](https://github.com/MaskRay/ccls).
+>   The `../../wiki/...` links below belong to upstream, use <https://github.com/MaskRay/ccls/wiki>.
+
 [![Telegram](https://img.shields.io/badge/telegram-@cclsp-blue.svg)](https://telegram.me/ccls_lsp)
 [![Gitter](https://img.shields.io/badge/gitter-ccls--project-blue.svg?logo=gitter-white)](https://gitter.im/ccls-project/ccls)
 
